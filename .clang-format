@@ -1,0 +1,27 @@
+# Basic 
+BasedOnStyle: LLVM
+ColumnLimit: 80
+IndentWidth: 2
+ContinuationIndentWidth: 2
+UseTab: Never
+
+# Arguments Style
+BinPackArguments: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: true
+AlignAfterOpenBracket: Align
+AllowShortFunctionsOnASingleLine: None
+AllowShortLambdasOnASingleLine: Empty
+
+BreakBeforeBraces: Attach
+
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+QualifierAlignment: Left
+SortIncludes: CaseSensitive
+IncludeBlocks: Preserve
+BreakBeforeBinaryOperators: None
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowShortBlocksOnASingleLine: Empty
