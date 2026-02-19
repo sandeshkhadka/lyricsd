@@ -10,6 +10,7 @@ pkg_check_modules(SDBUS REQUIRED IMPORTED_TARGET sdbus-c++)
 set(SOURCES 
   src/main.cpp
   src/mpris.cpp
+  src/lyrics.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCES})
