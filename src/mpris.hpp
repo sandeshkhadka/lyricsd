@@ -1,4 +1,8 @@
+#ifndef MPRISCLIENT_H
+#define MPRISCLIENT_H
+
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <sdbus-c++/Error.h>
 #include <sdbus-c++/IConnection.h>
@@ -7,11 +11,13 @@
 #include <string>
 #include <vector>
 
+using OnTrackChangedCallback = std::function<void()>;
+
 struct TrackInfo {
   std::string title;
   std::string artist;
   std::string album;
-  int64_t duration_us = 0; // Microseconds
+  int64_t duration_us; // Microseconds
   int64_t m_seeked_pos;
 
   bool IsValid() const {
@@ -49,6 +55,9 @@ private:
   std::string m_currentPlayerName;
   std::unique_ptr<sdbus::IConnection> m_session;
   std::unique_ptr<sdbus::IProxy> m_dbus_proxy;
+  std::vector<OnTrackChangedCallback> m_callbacks;
+
+  void RunTrackChangedCallbacks();
 
   TrackInfo m_trackInfo;
 
@@ -74,5 +83,9 @@ private:
 
 public:
   MprisClient();
+  void RegisterOnTrackChanged(OnTrackChangedCallback);
   void EnterMainLoop();
+  TrackInfo GetTrackInfo();
 };
+
+#endif

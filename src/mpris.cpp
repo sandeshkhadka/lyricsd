@@ -16,6 +16,10 @@ std::string MprisClient::MPRIS_SERVICE_PREFIX = "org.mpris.MediaPlayer2";
 std::string MprisClient::MPRIS_OBJECT_PATH = "/org/mpris/MediaPlayer2";
 std::string MprisClient::MPRIS_PLAYER_IFACE = "org.mpris.MediaPlayer2.Player";
 
+TrackInfo MprisClient::GetTrackInfo() {
+  return m_trackInfo;
+}
+
 void MprisClient::PrintCurrentTrackInfo() {
   std::string message;
   if (m_trackInfo.title.size() <= 0)
@@ -38,7 +42,10 @@ TrackInfo MprisClient::ParseMetadata(
     if (it != metadata.end()) {
       try {
         return it->second.get<std::string>();
-      } catch (...) {}
+      } catch (...) {
+        std::cerr << "Cannot extract " << it->first << "\n";
+        std::cerr << "Correct Type is: " << it->second.peekValueType() << "\n";
+      }
     }
     return "";
   };
@@ -50,7 +57,10 @@ TrackInfo MprisClient::ParseMetadata(
         auto arr = it->second.get<std::vector<std::string>>();
         if (!arr.empty())
           return arr[0];
-      } catch (...) {}
+      } catch (...) {
+        std::cerr << "Cannot extract " << it->first << "\n";
+        std::cerr << "Correct Type is: " << it->second.peekValueType() << "\n";
+      }
     }
     return "";
   };
@@ -60,7 +70,10 @@ TrackInfo MprisClient::ParseMetadata(
     if (it != metadata.end()) {
       try {
         return it->second.get<int64_t>();
-      } catch (...) {}
+      } catch (...) {
+        std::cerr << "Cannot extract " << it->first << "\n";
+        std::cerr << "Correct Type is: " << it->second.peekValueType() << "\n";
+      }
     }
     return 0;
   };
@@ -112,6 +125,7 @@ void MprisClient::OnNameOwnerChange(const std::string& name,
     } else if (!oldOwner.empty() && name == m_currentPlayerName) {
       InvalidateCurrentPlayer();
       MprisClient::FindAndWatchPlayer();
+      RunTrackChangedCallbacks();
     }
   }
 }
@@ -194,10 +208,21 @@ void MprisClient::OnPropertiesChanged(
         ParseMetadata(v.get<std::map<std::string, sdbus::Variant>>());
       std::cout << "Changed Track. \n Now Playing: ";
       PrintCurrentTrackInfo();
+      RunTrackChangedCallbacks();
     }
   }
 }
 
+void MprisClient::RunTrackChangedCallbacks() {
+  for (auto& cb : m_callbacks) {
+    cb();
+  }
+}
+
+void MprisClient::RegisterOnTrackChanged(OnTrackChangedCallback cb) {
+  m_callbacks.push_back(cb);
+}
+
 void MprisClient::EnterMainLoop() {
-  m_session->enterEventLoop();
+  m_session->enterEventLoopAsync();
 }
