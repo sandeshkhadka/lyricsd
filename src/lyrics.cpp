@@ -17,6 +17,9 @@ WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
 }
 
 std::string Lyrics::MakeRequest(const std::string& url) {
+  if (url == "") {
+    return "";
+  }
   CURL* curl = curl_easy_init();
   if (!curl)
     return "";
@@ -91,6 +94,9 @@ std::string Lyrics::UrlEncode(const std::string& str) {
 }
 
 std::string Lyrics::BuildUrl(const TrackInfo& track_info) {
+  if (track_info.duration_us == 0) {
+    return "";
+  }
   std::string url = Lyrics::LYRICS_API;
   std::string track_name = UrlEncode(track_info.title);
   std::string artist = UrlEncode(track_info.artist);
@@ -116,6 +122,7 @@ std::string Lyrics::GetLyrics(const TrackInfo& track_info) {
     return cached_lyrics;
   }
   std::string url = BuildUrl(track_info);
+  std::cout << "Attempting to fetch lyrics from : " << url << "\n";
   std::string response = MakeRequest(url);
   std::string syncedLyrics = ParseSyncedLyrics(response);
 

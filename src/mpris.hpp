@@ -34,7 +34,7 @@ struct TrackInfo {
 
   bool operator==(const TrackInfo& other) const {
     return title == other.title && artist == other.artist &&
-           album == other.album;
+           album == other.album && duration_us == other.duration_us;
   }
 
   bool operator!=(const TrackInfo& other) const {

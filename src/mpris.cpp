@@ -31,6 +31,7 @@ void MprisClient::PrintCurrentTrackInfo() {
   if (m_trackInfo.artist.size() > 0) {
     message += " from Album: " + m_trackInfo.album;
   }
+  message += "[ " + std::to_string(m_trackInfo.duration_us) + " ]";
   std::cout << message << std::endl;
 }
 
