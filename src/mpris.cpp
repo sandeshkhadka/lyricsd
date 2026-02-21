@@ -167,6 +167,7 @@ void MprisClient::WatchPlayer(const std::string& name) {
     .onInterface("org.mpris.MediaPlayer2.Player")
     .call([this](int64_t newPosition) {
       this->m_trackInfo.m_seeked_pos = newPosition;
+      RunSeekedCallbacks(newPosition);
     });
   try {
     sdbus::Variant metadataVar;
@@ -222,6 +223,32 @@ void MprisClient::RunTrackChangedCallbacks() {
 
 void MprisClient::RegisterOnTrackChanged(OnTrackChangedCallback cb) {
   m_callbacks.push_back(cb);
+}
+
+void MprisClient::RegisterOnSeeked(OnSeekedCallback cb) {
+  m_seek_callbacks.push_back(cb);
+}
+
+void MprisClient::RunSeekedCallbacks(int64_t position_us) {
+  for (auto& cb : m_seek_callbacks) {
+    cb(position_us);
+  }
+}
+
+int64_t MprisClient::GetPosition() {
+  if (!m_currentPlayerProxy)
+    return 0;
+  try {
+    sdbus::Variant posVar;
+    m_currentPlayerProxy->callMethod("Get")
+      .onInterface(DBUS_PROPS_IFACE)
+      .withArguments(MPRIS_PLAYER_IFACE, "Position")
+      .storeResultsTo(posVar);
+    return posVar.get<int64_t>();
+  } catch (sdbus::Error& e) {
+    std::cerr << "Failed to get position: " << e.getMessage() << "\n";
+    return 0;
+  }
 }
 
 void MprisClient::EnterMainLoop() {

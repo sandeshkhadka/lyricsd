@@ -12,6 +12,7 @@
 #include <vector>
 
 using OnTrackChangedCallback = std::function<void()>;
+using OnSeekedCallback = std::function<void(int64_t)>;
 
 struct TrackInfo {
   std::string title;
@@ -56,8 +57,10 @@ private:
   std::unique_ptr<sdbus::IConnection> m_session;
   std::unique_ptr<sdbus::IProxy> m_dbus_proxy;
   std::vector<OnTrackChangedCallback> m_callbacks;
+  std::vector<OnSeekedCallback> m_seek_callbacks;
 
   void RunTrackChangedCallbacks();
+  void RunSeekedCallbacks(int64_t position_us);
 
   TrackInfo m_trackInfo;
 
@@ -84,8 +87,10 @@ private:
 public:
   MprisClient();
   void RegisterOnTrackChanged(OnTrackChangedCallback);
+  void RegisterOnSeeked(OnSeekedCallback);
   void EnterMainLoop();
   TrackInfo GetTrackInfo();
+  int64_t GetPosition();
 };
 
 #endif

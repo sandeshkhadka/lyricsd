@@ -12,6 +12,7 @@ set(SOURCES
   src/main.cpp
   src/mpris.cpp
   src/lyrics.cpp
+  src/lyrics-emitter.cpp
   src/simplejson.cpp
 )
 

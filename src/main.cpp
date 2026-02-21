@@ -1,7 +1,8 @@
+#include "lyrics-emitter.hpp"
 #include "lyrics.hpp"
 #include "mpris.hpp"
 #include <condition_variable>
-#include <iostream>
+#include <memory>
 #include <mutex>
 #include <sdbus-c++/IConnection.h>
 #include <sdbus-c++/IProxy.h>
@@ -18,6 +19,26 @@ int main() {
   MprisClient client;
   Lyrics lyrics_client;
 
+  std::unique_ptr<LyricsEmmiter> emitter;
+
+  // Helper: stop old emitter, fetch lyrics, start new emitter
+  auto startEmitter = [&] {
+    if (emitter) {
+      emitter->Stop();
+      emitter.reset();
+    }
+
+    TrackInfo info = client.GetTrackInfo();
+    std::string lyrics = lyrics_client.GetLyrics(info);
+    if (lyrics.empty()) {
+      return;
+    }
+
+    int64_t position_us = client.GetPosition();
+    emitter = std::make_unique<LyricsEmmiter>(lyrics, info, position_us);
+    emitter->Start();
+  };
+
   client.RegisterOnTrackChanged([&] {
     {
       std::lock_guard<std::mutex> g(mtx);
@@ -26,9 +47,15 @@ int main() {
     cv.notify_one();
   });
 
-  std::cout << lyrics_client.GetLyrics(client.GetTrackInfo());
+  client.RegisterOnSeeked([&](int64_t position_us) {
+    if (emitter) {
+      emitter->Seek(position_us);
+    }
+  });
 
-  // all callback registration should be done before entering main loop
+  startEmitter();
+
+  // All callback registration should be done before entering main loop
   // the client's callback vector is not thread safe
   client.EnterMainLoop();
 
@@ -39,8 +66,7 @@ int main() {
     });
     trackChanged = false;
     lock.unlock();
-    // do some processing for changed state
-    std::cout << lyrics_client.GetLyrics(client.GetTrackInfo());
+    startEmitter();
     lock.lock();
   }
 
