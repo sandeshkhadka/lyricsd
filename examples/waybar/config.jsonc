@@ -1,0 +1,10 @@
+{
+  "custom/lyrics": {
+    "exec": "~/.config/waybar/scripts/lyricsd-waybar.sh",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "max-length": 80,
+    "on-click": "playerctl play-pause"
+  }
+}

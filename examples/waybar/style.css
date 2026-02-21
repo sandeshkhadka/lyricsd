@@ -1,0 +1,21 @@
+/* Add to your Waybar stylesheet (usually ~/.config/waybar/style.css) */
+
+#custom-lyrics {
+  font-style: italic;
+  color: #cba6f7;
+  padding: 0 10px;
+  transition: all 0.3s ease;
+}
+
+#custom-lyrics.playing {
+  color: #a6e3a1;
+}
+
+#custom-lyrics.instrumental {
+  color: #585b70;
+}
+
+#custom-lyrics.waiting {
+  color: #6c7086;
+  font-style: normal;
+}
