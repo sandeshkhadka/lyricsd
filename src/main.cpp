@@ -1,3 +1,4 @@
+#include "lyrics-dbus-service.hpp"
 #include "lyrics-emitter.hpp"
 #include "lyrics.hpp"
 #include "mpris.hpp"
@@ -18,6 +19,7 @@ int main() {
 
   MprisClient client;
   Lyrics lyrics_client;
+  LyricsDbusService dbus_service;
 
   std::unique_ptr<LyricsEmmiter> emitter;
 
@@ -36,6 +38,9 @@ int main() {
 
     int64_t position_us = client.GetPosition();
     emitter = std::make_unique<LyricsEmmiter>(lyrics, info, position_us);
+    emitter->RegisterOnLineChanged([&](const std::string& line) {
+      dbus_service.SetCurrentLine(line);
+    });
     emitter->Start();
   };
 

@@ -13,6 +13,7 @@ set(SOURCES
   src/mpris.cpp
   src/lyrics.cpp
   src/lyrics-emitter.cpp
+  src/lyrics-dbus-service.cpp
   src/simplejson.cpp
 )
 
