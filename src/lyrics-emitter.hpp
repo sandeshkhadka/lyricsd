@@ -6,7 +6,6 @@
 #include <condition_variable>
 #include <functional>
 #include <mutex>
-#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -27,7 +26,9 @@ private:
   size_t m_current_index = 0;
   std::atomic<bool> m_running{false};
   bool m_seeked = false;
+  bool m_paused = false;
   int64_t m_seek_position_ms = 0;
+  int64_t m_paused_playback_ms = 0;
   std::mutex m_mutex;
   std::condition_variable m_cv;
   std::thread m_thread;
@@ -37,7 +38,6 @@ private:
   std::vector<OnLineChangedCallback> m_line_callbacks;
 
   static std::vector<LyricLine> Parse(const std::string& lrcContent);
-  static std::optional<int64_t> ParseTimestamp(const std::string& timestamp);
   size_t FindCurrentIndex(int64_t position_ms);
 
   void EmitLoop();
@@ -52,6 +52,8 @@ public:
   void Start();
   void Stop();
   void Seek(int64_t position_us);
+  void Pause();
+  void Resume();
 
   void RegisterOnLineChanged(OnLineChangedCallback cb);
 };

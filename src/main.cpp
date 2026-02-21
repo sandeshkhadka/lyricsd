@@ -53,6 +53,16 @@ int main() {
     }
   });
 
+  client.RegisterOnPlaybackStatus([&](const std::string& status) {
+    if (!emitter)
+      return;
+    if (status == "Paused") {
+      emitter->Pause();
+    } else if (status == "Playing") {
+      emitter->Resume();
+    }
+  });
+
   startEmitter();
 
   // All callback registration should be done before entering main loop

@@ -211,6 +211,9 @@ void MprisClient::OnPropertiesChanged(
       std::cout << "Changed Track. \n Now Playing: ";
       PrintCurrentTrackInfo();
       RunTrackChangedCallbacks();
+    } else if (k == "PlaybackStatus") {
+      std::string status = v.get<std::string>();
+      RunPlaybackStatusCallbacks(status);
     }
   }
 }
@@ -232,6 +235,16 @@ void MprisClient::RegisterOnSeeked(OnSeekedCallback cb) {
 void MprisClient::RunSeekedCallbacks(int64_t position_us) {
   for (auto& cb : m_seek_callbacks) {
     cb(position_us);
+  }
+}
+
+void MprisClient::RegisterOnPlaybackStatus(OnPlaybackStatusCallback cb) {
+  m_playback_status_callbacks.push_back(cb);
+}
+
+void MprisClient::RunPlaybackStatusCallbacks(const std::string& status) {
+  for (auto& cb : m_playback_status_callbacks) {
+    cb(status);
   }
 }
 

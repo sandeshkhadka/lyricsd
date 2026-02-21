@@ -65,9 +65,24 @@ void LyricsEmmiter::Seek(int64_t position_us) {
   m_cv.notify_one();
 }
 
+void LyricsEmmiter::Pause() {
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_paused = true;
+  }
+  m_cv.notify_one();
+}
+
+void LyricsEmmiter::Resume() {
+  {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_paused = false;
+  }
+  m_cv.notify_one();
+}
+
 void LyricsEmmiter::EmitLoop() {
   // Anchor: wall-clock time corresponding to playback_position_ms
-  // This lets us compute the exact wall-clock time for every future line.
   auto wall_anchor = std::chrono::steady_clock::now();
   int64_t playback_anchor_ms = m_start_position_ms;
 
@@ -78,20 +93,46 @@ void LyricsEmmiter::EmitLoop() {
     auto target_time =
       wall_anchor + std::chrono::milliseconds(line_ts - playback_anchor_ms);
 
-    // Wait until it's time for this line (interruptible)
     {
       std::unique_lock<std::mutex> lock(m_mutex);
       m_cv.wait_until(lock, target_time, [this] {
-        return !m_running || m_seeked;
+        return !m_running || m_seeked || m_paused;
       });
 
       if (!m_running) {
         break;
       }
 
+      if (m_paused) {
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+          now - wall_anchor);
+        m_paused_playback_ms = playback_anchor_ms + elapsed.count();
+
+        m_cv.wait(lock, [this] {
+          return !m_running || !m_paused || m_seeked;
+        });
+
+        if (!m_running) {
+          break;
+        }
+
+        // Re-anchor wall clock to the paused position
+        wall_anchor = std::chrono::steady_clock::now();
+        playback_anchor_ms = m_paused_playback_ms;
+
+        if (m_seeked) {
+          m_seeked = false;
+          wall_anchor = std::chrono::steady_clock::now();
+          playback_anchor_ms = m_seek_position_ms;
+          m_current_index = FindCurrentIndex(playback_anchor_ms);
+          std::cout << "\n--- Seeked ---\n";
+        }
+        continue;
+      }
+
       if (m_seeked) {
         m_seeked = false;
-        // Re-anchor the clock to the new seek position
         wall_anchor = std::chrono::steady_clock::now();
         playback_anchor_ms = m_seek_position_ms;
         m_current_index = FindCurrentIndex(playback_anchor_ms);

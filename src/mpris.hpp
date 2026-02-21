@@ -13,6 +13,7 @@
 
 using OnTrackChangedCallback = std::function<void()>;
 using OnSeekedCallback = std::function<void(int64_t)>;
+using OnPlaybackStatusCallback = std::function<void(const std::string&)>;
 
 struct TrackInfo {
   std::string title;
@@ -58,9 +59,11 @@ private:
   std::unique_ptr<sdbus::IProxy> m_dbus_proxy;
   std::vector<OnTrackChangedCallback> m_callbacks;
   std::vector<OnSeekedCallback> m_seek_callbacks;
+  std::vector<OnPlaybackStatusCallback> m_playback_status_callbacks;
 
   void RunTrackChangedCallbacks();
   void RunSeekedCallbacks(int64_t position_us);
+  void RunPlaybackStatusCallbacks(const std::string& status);
 
   TrackInfo m_trackInfo;
 
@@ -88,6 +91,7 @@ public:
   MprisClient();
   void RegisterOnTrackChanged(OnTrackChangedCallback);
   void RegisterOnSeeked(OnSeekedCallback);
+  void RegisterOnPlaybackStatus(OnPlaybackStatusCallback);
   void EnterMainLoop();
   TrackInfo GetTrackInfo();
   int64_t GetPosition();
