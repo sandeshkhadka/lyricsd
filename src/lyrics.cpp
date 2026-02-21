@@ -1,9 +1,12 @@
 #include "lyrics.hpp"
+#include "mpris.hpp"
 #include "simplejson.hpp"
 #include <cstdlib>
 #include <curl/curl.h>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 
 std::string Lyrics::REL_CHACHE_DIR = ".cache/lyricsd";
@@ -118,17 +121,75 @@ std::string Lyrics::BuildUrl(const TrackInfo& track_info) {
 }
 
 std::string Lyrics::GetLyrics(const TrackInfo& track_info) {
+  if (!track_info.IsValid())
+    return "";
   if (track_info == m_trackinfo) {
     return cached_lyrics;
+  }
+  if (HasCached(track_info)) {
+    return GetCachedLyrics(track_info);
   }
   std::string url = BuildUrl(track_info);
   std::cout << "Attempting to fetch lyrics from : " << url << "\n";
   std::string response = MakeRequest(url);
   std::string syncedLyrics = ParseSyncedLyrics(response);
 
+  if (syncedLyrics.empty()) {
+    std::cerr << "Lyrics not found for: " << track_info.title << "\n";
+    return "";
+  }
+
   m_trackinfo = track_info;
   cached_lyrics = syncedLyrics;
+  std::filesystem::path cache_file = CacheLyrics(syncedLyrics, track_info);
+  std::cout << "Cached lyrics: " << cache_file << "\n";
   return syncedLyrics;
+}
+
+bool Lyrics::HasCached(const TrackInfo& trackinfo) {
+  if (!trackinfo.IsValid()) {
+    return false;
+  }
+  if (!cached_lyrics.empty()) {
+    return true;
+  }
+  std::filesystem::path cache_path = BuildCacheFilePath(trackinfo);
+  return std::filesystem::exists(cache_path);
+}
+
+std::string Lyrics::GetCachedLyrics(const TrackInfo& trackinfo) {
+  if (!HasCached(trackinfo))
+    return "";
+  std::filesystem::path cache_file = BuildCacheFilePath(trackinfo);
+  std::ifstream cache_stream(cache_file);
+  if (!cache_stream) {
+    std::cerr << "Failed to get cached file: " << cache_file << "\n";
+    return "";
+  }
+  std::cout << "Found cached lyrics: " << cache_file << "\n";
+  std::ostringstream ss;
+  ss << cache_stream.rdbuf();
+  return ss.str();
+}
+
+std::filesystem::path Lyrics::CacheLyrics(const std::string& lyrics,
+                                          const TrackInfo& trackinfo) {
+  std::string cache_file_name;
+  std::filesystem::path new_path = BuildCacheFilePath(trackinfo);
+  std::ofstream nfile(new_path);
+  if (!nfile) {
+    std::cerr << "Failed to create cache file: " << new_path << "\n";
+  }
+  nfile << lyrics;
+  return new_path;
+}
+
+std::filesystem::path Lyrics::BuildCacheFilePath(const TrackInfo& trackname) {
+  std::string cache_file_name =
+    trackname.title + "--" + trackname.artist + "--" + trackname.album + ".lrc";
+
+  std::filesystem::path file_path = m_cache_dir_path / cache_file_name;
+  return file_path;
 }
 
 std::string Lyrics::ParseSyncedLyrics(const std::string& json) {

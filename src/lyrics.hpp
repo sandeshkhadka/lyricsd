@@ -19,6 +19,9 @@ private:
   std::string BuildUrl(const TrackInfo&);
   std::string MakeRequest(const std::string&);
   std::string ParseSyncedLyrics(const std::string&);
+  std::filesystem::path CacheLyrics(const std::string&, const TrackInfo&);
+  std::string GetCachedLyrics(const TrackInfo&);
+  std::filesystem::path BuildCacheFilePath(const TrackInfo&);
 
 public:
   Lyrics();
