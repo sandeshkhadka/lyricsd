@@ -150,7 +150,7 @@ bool Lyrics::HasCached(const TrackInfo& trackinfo) {
   if (!trackinfo.IsValid()) {
     return false;
   }
-  if (!cached_lyrics.empty()) {
+  if (!cached_lyrics.empty() && trackinfo == m_trackinfo) {
     return true;
   }
   std::filesystem::path cache_path = BuildCacheFilePath(trackinfo);
@@ -163,7 +163,7 @@ std::string Lyrics::GetCachedLyrics(const TrackInfo& trackinfo) {
   std::filesystem::path cache_file = BuildCacheFilePath(trackinfo);
   std::ifstream cache_stream(cache_file);
   if (!cache_stream) {
-    std::cerr << "Failed to get cached file: " << cache_file << "\n";
+    std::cerr << "Cannot find the cache file: " << cache_file << "\n";
     return "";
   }
   std::cout << "Found cached lyrics: " << cache_file << "\n";
