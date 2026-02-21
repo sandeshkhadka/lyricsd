@@ -31,8 +31,14 @@ int main() {
     }
 
     TrackInfo info = client.GetTrackInfo();
+    if (!info.IsValid()) {
+      dbus_service.SetCurrentLine("");
+      return;
+    }
+
     std::string lyrics = lyrics_client.GetLyrics(info);
     if (lyrics.empty()) {
+      dbus_service.SetCurrentLine("");
       return;
     }
 
@@ -63,6 +69,7 @@ int main() {
       return;
     if (status == "Paused") {
       emitter->Pause();
+      dbus_service.SetCurrentLine("");
     } else if (status == "Playing") {
       emitter->Resume();
     }
